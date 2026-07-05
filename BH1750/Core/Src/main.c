@@ -45,7 +45,7 @@
 
 /* USER CODE BEGIN PV */
 uint8_t buffer[2];
-uint16_t value = 0;
+uint16_t raw = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,6 +77,7 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -103,11 +104,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
   buffer[0] = 0;
   buffer[1] = 0;
-//	HAL_GPIO_WritePin(BH1750_MODE_GPIO_Port, BH1750_MODE_Pin, GPIO_PIN_RESET);		//ADDR = 'L' --> Continuous mode
+	HAL_GPIO_WritePin(BH1750_MODE_GPIO_Port, BH1750_MODE_Pin, GPIO_PIN_RESET);		//ADDR = 'L' --> Continuous mode
 
-	HAL_I2C_Master_Transmit(&hi2c1, ADDR_LOW_ADDRESS_WRITE, (uint8_t*)POWER_ON, 1, 10);
-	HAL_I2C_Master_Transmit(&hi2c1, ADDR_LOW_ADDRESS_WRITE, (uint8_t*)RESET, 1, 10);
-	HAL_I2C_Master_Transmit(&hi2c1, ADDR_LOW_ADDRESS_WRITE, (uint8_t*)CON_H_RES_MODE, 1, 10);
+	BH1750_SendCommand(BH1750_POWER_ON);
+	BH1750_SendCommand(BH1750_RESET);
+	BH1750_SendCommand(BH1750_CON_H_RES_MODE);
 
 //	while(HAL_I2C_Master_Transmit(&hi2c1, ADDR_LOW_ADDRESS_WRITE, (uint8_t*)POWER_DOWN, 1, 120) != HAL_OK);
 //	__HAL_I2C_CLEAR_FLAG(&hi2c1, I2C_FLAG_STOPF);
@@ -139,8 +140,9 @@ int main(void)
 
 	HAL_I2C_Master_Receive(&hi2c1, ADDR_LOW_ADDRESS_READ, buffer, 2, HAL_MAX_DELAY);
 
-	value = ((buffer[0] << 8) | buffer[1]);
-	value /= 1.2;
+	raw = ((buffer[0] << 8) | buffer[1]);
+	float lux = raw / 1.2f;
+
 	HAL_Delay(150);
     /* USER CODE END WHILE */
 
@@ -208,8 +210,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
